@@ -11,8 +11,12 @@ database: store the knowledge
 Control the conversation between you and assistants.
 
 ## Commands
+### Register
 `c.register_command('len', lambda x, y: print(len(y)))`
 where x is an assistant, y is the history of your questions.
+
+### Call
+`%len`
 
 ## How to do it?
 ```python
