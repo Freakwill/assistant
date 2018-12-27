@@ -3,9 +3,10 @@ An extensible expert system.
 
 ## Assistant
 assistant = parser + inference engine + database
-parser: parse your question
-inference engine: fine the answer
-database: store the knowledge
+
+- parser: parse your question
+- inference engine: fine the answer
+- database: store the knowledge
 
 ## Controler
 Control the conversation between you and assistants.
