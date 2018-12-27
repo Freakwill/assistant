@@ -165,6 +165,7 @@ class Controler:
                     elif hasattr(assistant, cmd):
                         getattr(assistant, cmd)()
                 else:
+                    self.history.append(q)
                     self.print_(assistant.respond(q))
                     self.print_('Are you satisfied with the answer?[Press enter for yes] If not, show the right answer.')
                     s = self.input_()
