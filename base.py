@@ -110,6 +110,9 @@ class Answer:
     def __repr__(self):
         return 'answer: %s[last time:%s]'%(self.content, self.last_time)
 
+    def __bool__(self):
+        return self.content and self.content != "I don't know."
+
 
 class Controler:
     """Controler Class

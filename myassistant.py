@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-import pickle
 import pathlib
-import time
 
 import assistant
 
