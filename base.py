@@ -18,6 +18,7 @@ class Assistant:
     Implement answer/update methods in subclasses.
     """
     folder = DEFAULT_FOLDER
+    suffix = '.pkl'
 
     def __init__(self, name='expert', data=None, description='I am an object of Assistant class'):
         self.name = name
@@ -29,10 +30,10 @@ class Assistant:
     @classmethod
     def create(cls, name, *args, **kwargs):
         # Create an assistant, if it exists, then just load it.
-        filename = (cls.folder / name).with_suffix('.pkl')
+        filename = (cls.folder / name).with_suffix(cls.suffix)
         if filename.exists():
             print('[Assistant %s is loaded]' % name)
-            return Assistant.load(filename)
+            return cls.load(filename)
         else:
             print('[New assistant %s is created]' % name)
             return cls(name, *args, **kwargs)
@@ -108,7 +109,7 @@ class Answer:
     def __repr__(self):
         return 'Answer: %s [last time:%s]'%(self.content, self.last_time)
 
-    def __format__(self, spec='stamp'):
+    def __format__(self, spec=''):
         if spec == 'stamp':
             return '%s [last time:%s]'%(self.content, self.last_time)
         else:
@@ -155,12 +156,12 @@ class Controller:
         return self.commands[key]
 
     def __enter__(self):
-        print('Welcome, my host.')
+        print('--- Welcome, my host. ---')
         return self
 
     def __exit__(self, *args, **kwargs):
         self.history = []
-        print('The controller is shut down.')
+        print('--- The controller is shut down. ---')
 
 
     def run(self, assistant):
@@ -180,19 +181,23 @@ class Controller:
                         getattr(assistant, cmd)()
                 else:
                     self.history.append(q)
-                    self.print_(assistant.respond(q))
-                    self.print_('Are you satisfied with the answer?[Press <Enter> for yes] If not, show the right answer.')
+                    a = assistant.respond(q)
+                    if a:
+                        self.print_(a)
+                    else:
+                        self.print_('{0}'.format(a))
+                    print('* Are you satisfied with the answer?[Press <Enter> for yes] If not, show the right answer. *')
                     s = self.input_()
                     if s:
                         assistant.update(q, Answer(s))
                         assistant.saveflag = True
                         continue
-                    self.print_('^_^')
+                    self.print_('Get it.')
 
-            s = input('Do you want to save the new data?[y/n]')
+            s = input('* Do you want to save the new data?[y/n] *')
             if s in {'', 'y', 'yes'}:
                 self.save(assistant)
-                print('data are saved.')
+                print('* Data are saved. *')
         else:
             self.print_(assistant.farewell())
 
