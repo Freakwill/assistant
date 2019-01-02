@@ -28,7 +28,8 @@ class YAMLAssistant(assistant.SimpleAssistant):
     """
     Save data in yaml files.
     """
-    
+    suffix = '.yaml'
+
     @staticmethod
     def load(filename):
         with open(filename) as fo:
@@ -45,5 +46,7 @@ class YAMLAssistant(assistant.SimpleAssistant):
 
 if __name__ == '__main__':
     with assistant.Controller() as c:
+        c.register_command('print', lambda x, y: print(x.data))
         a = YAMLAssistant.create('Yan')
+
         c.run(a)
