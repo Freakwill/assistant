@@ -103,10 +103,16 @@ class Answer:
         self.last_time = time.asctime() if last_time is None else last_time
 
     def __str__(self):
-        return '%s[last time:%s]'%(self.content, self.last_time)
+        return '{0:stamp}'.format(self)
 
     def __repr__(self):
-        return 'answer: %s[last time:%s]'%(self.content, self.last_time)
+        return 'Answer: %s [last time:%s]'%(self.content, self.last_time)
+
+    def __format__(self, spec='stamp'):
+        if spec == 'stamp':
+            return '%s [last time:%s]'%(self.content, self.last_time)
+        else:
+            return self.content
 
     def __bool__(self):
         return self.content and self.content != "I don't know."
@@ -175,7 +181,7 @@ class Controller:
                 else:
                     self.history.append(q)
                     self.print_(assistant.respond(q))
-                    self.print_('Are you satisfied with the answer?[Press enter for yes] If not, show the right answer.')
+                    self.print_('Are you satisfied with the answer?[Press <Enter> for yes] If not, show the right answer.')
                     s = self.input_()
                     if s:
                         assistant.update(q, Answer(s))
