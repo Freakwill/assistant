@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 """Create an assistant for yourself
@@ -25,12 +26,6 @@ class Assistant:
         # self.memory = []
         self.description = description
 
-    # save/load methods:
-    @staticmethod
-    def load(filename):
-        with open(filename, 'rb') as fo:
-            return pickle.load(fo)
-
     @classmethod
     def create(cls, name, *args, **kwargs):
         # Create an assistant, if it exists, then just load it.
@@ -42,6 +37,12 @@ class Assistant:
             print('[New assistant %s is created]' % name)
             return cls(name, *args, **kwargs)
 
+    # save/load methods:
+    @staticmethod
+    def load(filename):
+        with open(filename, 'rb') as fo:
+            return pickle.load(fo)
+
     def save(self, filename=None):
         if filename is None:
             filename = (self.folder / self.name).with_suffix('.pkl')
@@ -50,17 +51,14 @@ class Assistant:
             with open(filename, 'wb') as fo:
                 pickle.dump(self, fo)
 
-    def __getstate__(self):
-        return self.name, self.data, self.description
-
     def __setstate__(self, state):
-        self.name, self.data, self.description = state
+        self.name, self.data, self.description = state['name'], state['data'], state['description']
 
     def reset(self):
         self.data = None
 
     def parse(self, question):
-        # overriden in subclasses
+        # overridden in subclasses
         return question
 
     def answer(self, question):
@@ -113,9 +111,12 @@ class Answer:
     def __bool__(self):
         return self.content and self.content != "I don't know."
 
+    def __setstate__(self, state):
+        self.content, self.last_time = state['content'], state['last_time']
 
-class Controler:
-    """Controler Class
+
+class Controller:
+    """Controller Class
 
     Interface via which clients communicate with their assistants.
     """
@@ -134,8 +135,12 @@ class Controler:
     def print_(self, s=''):
         print(self.prompt1, s)
 
-    def input_(self):
-        return input(self.prompt2 + ' ')
+    def input_(self, repeat=False):
+        inp = input(self.prompt2 + ' ')
+        if repeat:
+            if inp == '':
+                inp = self.input_(repeat)
+        return inp
 
     def register_command(self, name, action):
         self.commands.update({name: action})
@@ -149,7 +154,7 @@ class Controler:
 
     def __exit__(self, *args, **kwargs):
         self.history = []
-        print('The controler is shut down.')
+        print('The controller is shut down.')
 
 
     def run(self, assistant):
@@ -179,7 +184,7 @@ class Controler:
                     self.print_('^_^')
 
             s = input('Do you want to save the new data?[y/n]')
-            if s in {'y', 'yes'}:
+            if s in {'', 'y', 'yes'}:
                 self.save(assistant)
                 print('data are saved.')
         else:
@@ -195,10 +200,10 @@ class SimpleAssistant(Assistant):
     The answer method is `get` method of dict.
     The update method is `update` method of dict.
     """
-    def __init__(self, name='Simple', data=None):
+    def __init__(self, name='Simple', data=None, *args, **kwargs):
         if data is None:
             data = {}
-        super(SimpleAssistant, self).__init__(name, data)
+        super(SimpleAssistant, self).__init__(name, data, *args, **kwargs)
 
     def reset(self):
         self.data = {}

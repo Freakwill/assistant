@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 import pathlib
 
-import assistant
 import wikipedia
-wikipedia.exceptions.PageError
+import yaml
+
+import assistant
 
 class WebAssistant(assistant.SimpleAssistant):
     pass
@@ -22,7 +24,26 @@ class WikiAssistant(WebAssistant):
         except:
             raise wikipedia.exceptions.PageError(question)
 
+class YAMLAssistant(assistant.SimpleAssistant):
+    """
+    Save data in yaml files.
+    """
+    
+    @staticmethod
+    def load(filename):
+        with open(filename) as fo:
+            return yaml.load(fo)
 
-with assistant.Controler() as c:
-    lucy = WikiAssistant.create('Lucy')
-    c.run(lucy)
+    def save(self, filename=None):
+        if filename is None:
+            filename = (self.folder / self.name).with_suffix('.yaml')
+        if self.saveflag is True:
+            self.saveflag = False
+            with open(filename, 'w') as fo:
+                yaml.dump(self, fo)
+
+
+if __name__ == '__main__':
+    with assistant.Controller() as c:
+        a = YAMLAssistant.create('Yan')
+        c.run(a)
