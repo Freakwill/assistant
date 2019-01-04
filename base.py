@@ -60,7 +60,7 @@ class Assistant:
 
     def parse(self, question):
         # overridden in subclasses
-        return question
+        raise NotImplementedError
 
     def answer(self, question):
         # implemented in subclasses
@@ -83,6 +83,9 @@ class Assistant:
     def update(self, question, answer):
         raise NotImplementedError
 
+    def asked(self):
+        raise NotImplementedError
+
     # Some polite expressions
     def welcome(self):
         return 'I am %s, Can I help you? (input [q]uit to quit)' % self.name
@@ -94,10 +97,8 @@ class Assistant:
         return 'What is your question?'
 
 
-class Answer:
-    """Answer given by your assistant
-
-    Essentially, it is a string with time.
+class Item:
+    """Essentially, it is a string with time.
     """
     def __init__(self, content, last_time=None):
         self.content = content
@@ -106,20 +107,45 @@ class Answer:
     def __str__(self):
         return '{0:stamp}'.format(self)
 
-    def __repr__(self):
-        return 'Answer: %s [last time:%s]'%(self.content, self.last_time)
-
     def __format__(self, spec=''):
         if spec == 'stamp':
             return '%s [last time:%s]'%(self.content, self.last_time)
         else:
-            return self.content
-
-    def __bool__(self):
-        return self.content and self.content != "I don't know."
+            return str(self.content)
 
     def __setstate__(self, state):
         self.content, self.last_time = state['content'], state['last_time']
+
+    def __eq__(self, other):
+        return self.content == other.content
+
+
+class Question(Item):
+    def __init__(self, content, last_time=None):
+        super(Question, self).__init__(content, last_time)
+        self.frequency = 0
+
+    def __repr__(self):
+        return 'Question: %s [last time:%s]'%(self.content, self.last_time)
+
+    def __hash__(self):
+        return id(self.content)
+
+    def __setstate__(self, state):
+        self.content, self.last_time, self.frequency = state['content'], state['last_time'], state['frequency']
+
+
+class Answer(Item):
+    """Answer given by your assistant
+    
+    Extends:
+        Item
+    """
+    def __repr__(self):
+        return 'Answer: %s [last time:%s]'%(self.content, self.last_time)
+
+    def __bool__(self):
+        return self.content and self.content != "I don't know."
 
 
 class Controller:
@@ -206,7 +232,7 @@ class Controller:
 
 
 class SimpleAssistant(Assistant):
-    """Essentially, it is a dict
+    """Create an assistant whose data is a dict
     
     The answer method is `get` method of dict.
     The update method is `update` method of dict.
@@ -226,6 +252,50 @@ class SimpleAssistant(Assistant):
     def update(self, question, answer):
         if isinstance(answer, str):
             answer = Answer(answer)
-        answer.last_time = time.asctime()
-        self.data.update({question:str(answer)})
+        else:
+            answer.last_time = time.asctime()
+        self.data.update({question: answer})
+
+    def asked(self, question):
+        return question in self.data
+
+
+class PairAssistant(Assistant):
+    """Create an assistant whose data is a list of pair
+    
+    The answer method is searching the pair in a list
+    The update method is modifying the pair in a list
+    """
+    def __init__(self, name='Simple', data=None, *args, **kwargs):
+        if data is None:
+            data = []
+        super(PairAssistant, self).__init__(name, data, *args, **kwargs)
+
+    def reset(self):
+        self.data = []
+
+    def parse(self, question):
+        # overridden in subclasses
+        return Question(question)
+
+    def answer(self, question):
+        # question -> answer
+        for q, a in self.data:
+            if q == question:
+                return a
+        return Answer("I don't know.")
+
+    def update(self, question, answer):
+        if isinstance(answer, str):
+            answer = Answer(answer)
+        else:
+            answer.last_time = time.asctime()
+        for q, a in self.data:
+            if q == question:
+                self.data.remove((q, a))
+                break
+        self.data.append((q, a))
+
+    def asked(self, question):
+        return question in [q for q, a in self.data]
 
